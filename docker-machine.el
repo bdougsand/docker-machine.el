@@ -17,8 +17,10 @@
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map widget-keymap)
     (define-key map (kbd "g") 'docker-machine--create-page)
+    (define-key map (kbd "q") 'delete-window)
     map)
   "Keymap for docker-machine major mode.")
+
 
 (define-derived-mode docker-machine-mode special-mode "Docker-Machine"
   "A major mode for viewing a list of Docker machines."
@@ -41,10 +43,10 @@
 
 (defun docker-machine--env (machine)
   "Set up the environment variables to allow the Docker client to
-communicate with the specified machine."
-  (shell))
+communicate with the specified machine.")
 
-(defun docker-machine--select ()
+(defun docker-machine--select (machine)
+  ""
   )
 
 (defun docker-machine--info ()
@@ -107,21 +109,26 @@ communicate with the specified machine."
            font-lock-face docker-machine-name-face
            keymap ,docker-machine-mode--machine-map))))
 
-(defun docker-machine--create-page (&optional machines)
-  (unless machines (setq machines (docker-machine--machines)))
-  (let ((buf (get-buffer-create "*docker-machine ls*")))
-    (save-excursion
+(defun docker-machine--update-page (machines &optional buf)
+  (unless buf
+    (setq buf (get-buffer-create "*docker-machine ls*")))
+  (save-excursion
       (set-buffer buf)
       (setq buffer-read-only nil)
       (erase-buffer)
       (docker-machine--write-page machines)
       (setq buffer-read-only 't))
+  buf)
+
+(defun docker-machine--create-page (&optional machines)
+  (unless machines (setq machines (docker-machine--machines)))
+  (let ((buf (docker-machine--update-page machines)))
     (unless (get-buffer-window buf)
       (set-window-buffer
        (split-window-sensibly)
        buf))))
 
-
+(get-buffer-create "*docker-machine ls*")
 (docker-machine--create-page )
 
 

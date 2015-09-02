@@ -12,12 +12,29 @@
   :type 'face
   :group 'docker-machine)
 
+(defun docker-machine--options (machine host certpath)
+  (format "--host=%s --tlsverify=true --tlscacert=%s/ca.pem --tlscert=%s/cert.pem --tlskey=%s/key.pem" host certpath certpath certpath))
+
+(defun docker-machine--setenv (machine)
+  (loop for line in (process-lines docker-machine-executable "env" machine)
+        for (varname varval) = (split-string line "=")
+        when (not (string-prefix-p "#" line))
+
+        append (list varname)))
+
+
+(defun docker-machine--ps (machine &all?)
+  "List the containers on a given machine."
+  (interactive)
+  )
 
 (defvar docker-machine-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map widget-keymap)
     (define-key map (kbd "g") 'docker-machine--create-page)
+    (define-key map (kbd "p") 'docker-machine--ps)
     (define-key map (kbd "q") 'delete-window)
+    (define-key map (kbd "i" 'docker-machine--info))
     map)
   "Keymap for docker-machine major mode.")
 
@@ -58,7 +75,7 @@ communicate with the specified machine.")
 
 
 ;(define-key docker-machine "s" 'docker-machine--select)
-(define-key docker-machine-mode-map "i" docker-machine--info)
+(define-key docker-machine-mode-map "i" 'docker-machine--info)
 ;(define-key docker-machine-mode-map "n" docker-machine--)
 ;(define-key docker-machine-mode-map "D" docker-machine--)
 ;(define-key docker-machine-mode-map "u" docker-machine--)
@@ -124,12 +141,17 @@ communicate with the specified machine.")
   (unless machines (setq machines (docker-machine--machines)))
   (let ((buf (docker-machine--update-page machines)))
     (unless (get-buffer-window buf)
+
       (set-window-buffer
-       (split-window-sensibly)
+       (current-window)
        buf))))
 
-(get-buffer-create "*docker-machine ls*")
+
+
+
+;(get-buffer-create "*docker-machine ls*")
 (docker-machine--create-page )
+
 
 
 ;(provide 'docker-machine)
